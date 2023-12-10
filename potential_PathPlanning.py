@@ -129,16 +129,20 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
     gix = round((goal_x - minx) / reso)
     giy = round((goal_y - miny) / reso)
 
+    obs_x = (np.array(copy.deepcopy(obstacle_x)) - minx) / reso
+    obs_y = (np.array(copy.deepcopy(obstacle_y)) - miny) / reso
+
     if show_animation:
-        draw_heatmap(pmap)
+        #draw_heatmap(pmap)
         # for stopping simulation with the esc key.
         plt.gcf().canvas.mpl_connect('key_release_event',
                                      lambda event: [exit(0) if event.key == 'escape' else None])
         plt.plot(ix, iy, "oy")
         plt.plot(gix, giy, "ok")
+        plt.scatter(obs_x, obs_y)
         plt.annotate("GOAL", xy=(gix + 2, giy + 2))
         plt.annotate("START", xy=(25, 22), color='yellow')
-        plt.axis(False)
+        plt.axis(True)
 
     path_x, path_y = [start_x], [start_y]
     motion = get_motion_model()
@@ -204,6 +208,7 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
 
         if show_animation:
             plt.plot(ix, iy, ".y")
+            # plt.plot(xp, yp, ".y")
             plt.pause(0.12)
 
     print("Goal!!")
@@ -245,7 +250,7 @@ def main():
         _, _ = potential_field_planning(
             start_x, start_y, goal_x, goal_y, obstacle_x, obstacle_y, grid_size, robot_radius, model,
             loss_func, optimizer)
-        plt.clf()
+        plt.cla()
     
     model.eval()
     _, _ = potential_field_planning(
