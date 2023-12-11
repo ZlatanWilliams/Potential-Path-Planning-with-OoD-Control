@@ -129,8 +129,8 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
     gix = round((goal_x - minx) / reso)
     giy = round((goal_y - miny) / reso)
 
-    obs_x = (np.array(copy.deepcopy(obstacle_x)) - minx) / reso + 0.4
-    obs_y = (np.array(copy.deepcopy(obstacle_y)) - miny) / reso + 0.4
+    obs_x = (np.array(copy.deepcopy(obstacle_x)) - minx) / reso + 0.3
+    obs_y = (np.array(copy.deepcopy(obstacle_y)) - miny) / reso + 0.3
 
     if show_animation:
         draw_heatmap(pmap)
@@ -139,7 +139,7 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
                                      lambda event: [exit(0) if event.key == 'escape' else None])
         plt.plot(ix, iy, marker="o", markerfacecolor="orange", markersize=12, markeredgewidth=0)
         plt.plot(gix, giy, "*r", markersize=20)
-        plt.scatter(obs_x, obs_y, marker='s', s=95, c='black')
+        plt.scatter(obs_x, obs_y, marker='o', s=200, c='black')
         plt.annotate("GOAL", xy=(gix + 2, giy + 2), color='red')
         plt.annotate("START", xy=(25, 22), color='orange')
         plt.axis(False)
@@ -174,7 +174,13 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
         iy = miniy
         state = np.array([path_x[-1], path_y[-1], minix, miniy, minp])
         np.random.seed(int(seed/2))
-        state = torch.from_numpy(state + 0.05 * np.random.normal(0, 1, state.size)).float()
+
+        # OMAC
+        state = torch.from_numpy(state).float()
+
+        # OoD-Control
+        # state = torch.from_numpy(state + 0.05 * np.random.normal(0, 1, state.size)).float()
+
         predict = model(state)
         # predict = torch.clamp(predict, min=-1.5, max=1.5)
         ix = minix + wind[0]
@@ -186,11 +192,16 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
         if isTraining == True:
             loss.backward()
             optimizer.step()
-        ix = ix - wind[0]
-        iy = iy - wind[1]
+        
+        # origin
+        #ix = ix - wind[0]
+        #iy = iy - wind[1]
+
+        # predict
         predict = predict.detach().numpy()
-        # ix -= 0.2 * predict[0]
-        # iy -= 0.2 * predict[1]
+        #ix -= 0.2 * predict[0]
+        #iy -= 0.2 * predict[1]
+
         xp = ix * reso + minx
         yp = iy * reso + miny
         d = np.hypot(goal_x - xp, goal_y - yp)
@@ -200,7 +211,8 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
         for idx in range(len(obstacle_x)):
             if np.hypot(obstacle_x[idx] - xp, obstacle_y[idx] - yp) < 2:
                 print("Collision at ({},{})!".format(ix, iy))
-                plt.plot(ix, iy, "or")
+                plt.plot(ix, iy, marker="x", markersize=7, markerfacecolor="red", markeredgewidth=2,
+                         markeredgecolor="red")
                 plt.pause(0.12)
                 collision = True
                 break
@@ -209,14 +221,8 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
             break
 
         if show_animation:
-            # plt.plot((pre_ix + ix)/2, (pre_iy+iy)/2, ".g", markersize=7)
-            plt.plot(ix, iy, marker=".", markersize=8, markerfacecolor="orange", markeredgewidth=0)
-            # plt.plot(xp, yp, ".y")
-            plt.pause(0.12)
-            # pre_ix = ix
-            # pre_iy = iy
-
-    print("Goal!!")
+            plt.plot(ix, iy, marker=".", markersize=7, markerfacecolor="orange", markeredgewidth=0)
+            plt.pause(0.10)
 
     return path_x, path_y
 
