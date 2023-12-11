@@ -149,7 +149,7 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
     collision = False
     outside = False
     # seed = 26236
-    seed = 6483
+    seed = 6327
     # pre_ix = ix
     # pre_iy = iy
     while d >= reso:
@@ -176,10 +176,10 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
         np.random.seed(int(seed/2))
 
         # OMAC
-        state = torch.from_numpy(state).float()
+        # state = torch.from_numpy(state).float()
 
         # OoD-Control
-        # state = torch.from_numpy(state + 0.05 * np.random.normal(0, 1, state.size)).float()
+        state = torch.from_numpy(state + 0.05 * np.random.normal(0, 1, state.size)).float()
 
         predict = model(state)
         # predict = torch.clamp(predict, min=-1.5, max=1.5)
@@ -199,8 +199,8 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
 
         # predict
         predict = predict.detach().numpy()
-        #ix -= 0.2 * predict[0]
-        #iy -= 0.2 * predict[1]
+        ix -= 0.2 * predict[0]
+        iy -= 0.2 * predict[1]
 
         xp = ix * reso + minx
         yp = iy * reso + miny
@@ -224,6 +224,8 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
             plt.plot(ix, iy, marker=".", markersize=7, markerfacecolor="orange", markeredgewidth=0)
             plt.pause(0.10)
 
+    print("Finished")
+
     return path_x, path_y
 
 
@@ -242,10 +244,12 @@ def main():
     grid_size = 0.5  # potential grid size [m]
     robot_radius = 5.0  # robot radius [m]
 
-    obstacle_x = [9.0, 6.0, 10.0, 20.0, 25.0, 28.0, 20.0, 22.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0,
-          15.0, 15.0]  # obstacle x position list [m]
-    obstacle_y = [9.0, 15.0, 15.0, 26.0, 25.0, 28.0, 31.0, 20.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0,
-          22.0, 23.0]  # obstacle y position list [m]
+    obstacle_x = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0,
+          15.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 24.0, 24.0, 24.0, 24.0, 26.0, 27.0, 28.0,
+          16.0, 17.0, 18.0, 19.0, 11.0, 24.0]  # obstacle x position list [m]
+    obstacle_y = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0,
+          22.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 19.0, 18.0, 17.0, 16.0, 25.0, 25.0, 25.0,
+          9.5, 9.5, 9.5, 9.5, 20.0, 10.0]  # obstacle y position list [m]
 
     if show_animation:
         plt.grid(False)
@@ -257,7 +261,7 @@ def main():
     loss_func = nn.MSELoss()
     
     model.train()
-    for _ in range(1):
+    for _ in range(10):
         _, _ = potential_field_planning(
             start_x, start_y, goal_x, goal_y, obstacle_x, obstacle_y, grid_size, robot_radius, model,
             loss_func, optimizer)
