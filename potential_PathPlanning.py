@@ -113,7 +113,7 @@ class ExternalForcePredictor(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.tanh(self.fc3(x))
+        x = torch.tanh(self.fc3(x))
         return x
 
 
@@ -129,27 +129,29 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
     gix = round((goal_x - minx) / reso)
     giy = round((goal_y - miny) / reso)
 
-    obs_x = (np.array(copy.deepcopy(obstacle_x)) - minx) / reso
-    obs_y = (np.array(copy.deepcopy(obstacle_y)) - miny) / reso
+    obs_x = (np.array(copy.deepcopy(obstacle_x)) - minx) / reso + 0.4
+    obs_y = (np.array(copy.deepcopy(obstacle_y)) - miny) / reso + 0.4
 
     if show_animation:
-        #draw_heatmap(pmap)
+        draw_heatmap(pmap)
         # for stopping simulation with the esc key.
         plt.gcf().canvas.mpl_connect('key_release_event',
                                      lambda event: [exit(0) if event.key == 'escape' else None])
-        plt.plot(ix, iy, "oy")
-        plt.plot(gix, giy, "ok")
-        plt.scatter(obs_x, obs_y)
-        plt.annotate("GOAL", xy=(gix + 2, giy + 2))
-        plt.annotate("START", xy=(25, 22), color='yellow')
-        plt.axis(True)
+        plt.plot(ix, iy, marker="o", markerfacecolor="orange", markersize=12, markeredgewidth=0)
+        plt.plot(gix, giy, "*r", markersize=20)
+        plt.scatter(obs_x, obs_y, marker='s', s=95, c='black')
+        plt.annotate("GOAL", xy=(gix + 2, giy + 2), color='red')
+        plt.annotate("START", xy=(25, 22), color='orange')
+        plt.axis(False)
 
     path_x, path_y = [start_x], [start_y]
     motion = get_motion_model()
     collision = False
     outside = False
-    #seed = 26236
+    # seed = 26236
     seed = 6483
+    # pre_ix = ix
+    # pre_iy = iy
     while d >= reso:
         minp = float("inf")
         minix, miniy = -1, -1
@@ -198,7 +200,7 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
         for idx in range(len(obstacle_x)):
             if np.hypot(obstacle_x[idx] - xp, obstacle_y[idx] - yp) < 2:
                 print("Collision at ({},{})!".format(ix, iy))
-                plt.plot(ix, iy, ".r")
+                plt.plot(ix, iy, "or")
                 plt.pause(0.12)
                 collision = True
                 break
@@ -207,9 +209,12 @@ def potential_field_planning(start_x, start_y, goal_x, goal_y, obstacle_x, obsta
             break
 
         if show_animation:
-            plt.plot(ix, iy, ".y")
+            # plt.plot((pre_ix + ix)/2, (pre_iy+iy)/2, ".g", markersize=7)
+            plt.plot(ix, iy, marker=".", markersize=8, markerfacecolor="orange", markeredgewidth=0)
             # plt.plot(xp, yp, ".y")
             plt.pause(0.12)
+            # pre_ix = ix
+            # pre_iy = iy
 
     print("Goal!!")
 
@@ -238,7 +243,7 @@ def main():
 
     if show_animation:
         plt.grid(False)
-        plt.axis("equal")
+        plt.axis("auto")
 
     # path generation
     model = ExternalForcePredictor()
